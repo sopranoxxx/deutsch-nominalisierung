@@ -29,7 +29,7 @@
     .pill { display:inline-block; padding: 2px 8px; border-radius: 999px; border:1px solid #ddd; font-size: 12px; margin-left: 8px; }
     .status { margin-top: 12px; white-space: pre-wrap; font-family: ui-monospace, Menlo, monospace; font-size: 13px; }
 
-    .barwrap { width: 100%; height: 10px; border:1px solid #ddd; border-radius:999px; overflow:hidden; background:#fff; }
+    .barwrap { width: 100%; height: 10px; border:1px solid #ddd; border-radius:999px; overflow:hidden; background:#fff; margin-top: 6px; }
     .bar { height: 100%; width:0%; background:#2a7; }
 
     details { margin-top: 10px; }
@@ -104,87 +104,19 @@ document.addEventListener("DOMContentLoaded", () => {
    * Wortbank (52 Wörter)
    ***********************/
   const WORDS = [
-    // Verben
-    { lemma: "spielen",   type: "verb" },
-    { lemma: "lesen",     type: "verb" },
-    { lemma: "schreiben", type: "verb" },
-    { lemma: "lernen",    type: "verb" },
-    { lemma: "essen",     type: "verb" },
-    { lemma: "trinken",   type: "verb" },
-    { lemma: "schlafen",  type: "verb" },
-    { lemma: "laufen",    type: "verb" },
-    { lemma: "schwimmen", type: "verb" },
-    { lemma: "singen",    type: "verb" },
-    { lemma: "tanzen",    type: "verb" },
-    { lemma: "lachen",    type: "verb" },
-    { lemma: "weinen",    type: "verb" },
-    { lemma: "sprechen",  type: "verb" },
-    { lemma: "hören",     type: "verb" },
-    { lemma: "sehen",     type: "verb" },
-    { lemma: "denken",    type: "verb" },
-    { lemma: "rechnen",   type: "verb" },
-    { lemma: "malen",     type: "verb" },
-    { lemma: "basteln",   type: "verb" },
-    { lemma: "reisen",    type: "verb" },
-    { lemma: "helfen",    type: "verb" },
-    { lemma: "kaufen",    type: "verb" },
-    { lemma: "gewinnen",  type: "verb" },
-    { lemma: "verlieren", type: "verb" },
-    { lemma: "üben",      type: "verb" },
-    { lemma: "arbeiten",  type: "verb" },
-    { lemma: "suchen",    type: "verb" },
-    { lemma: "finden",    type: "verb" },
-    { lemma: "beginnen",  type: "verb" },
-
-    // Adjektive
-    { lemma: "gut",        type: "adj" },
-    { lemma: "neu",        type: "adj" },
-    { lemma: "alt",        type: "adj" },
-    { lemma: "jung",       type: "adj" },
-    { lemma: "klein",      type: "adj" },
-    { lemma: "groß",       type: "adj" },
-    { lemma: "schön",      type: "adj" },
-    { lemma: "wichtig",    type: "adj" },
-    { lemma: "richtig",    type: "adj" },
-    { lemma: "falsch",     type: "adj" },
-    { lemma: "schnell",    type: "adj" },
-    { lemma: "langsam",    type: "adj" },
-    { lemma: "stark",      type: "adj" },
-    { lemma: "klug",       type: "adj" },
-    { lemma: "freundlich", type: "adj" },
-
-    // Aha
-    { lemma: "fremd",      type: "adj" },
-    { lemma: "eigen",      type: "adj" },
-    { lemma: "besonders",  type: "adj" },
-    { lemma: "öffentlich", type: "adj" },
-    { lemma: "gemeinsam",  type: "adj" },
-
-    // Fallen
-    { lemma: "dunkel", type: "adj" },
-    { lemma: "krank",  type: "adj" }
+    // Verben (30)
+    "spielen","lesen","schreiben","lernen","essen","trinken","schlafen","laufen","schwimmen","singen",
+    "tanzen","lachen","weinen","sprechen","hören","sehen","denken","rechnen","malen","basteln",
+    "reisen","helfen","kaufen","gewinnen","verlieren","üben","arbeiten","suchen","finden","beginnen",
+    // Adjektive (15)
+    "gut","neu","alt","jung","klein","groß","schön","wichtig","richtig","falsch","schnell","langsam","stark","klug","freundlich",
+    // Aha (5)
+    "fremd","eigen","besonders","öffentlich","gemeinsam",
+    // Fallen (2)
+    "dunkel","krank"
   ];
 
-  /***********************
-   * Helpers
-   ***********************/
   const cap = (s) => s ? (s[0].toUpperCase() + s.slice(1)) : s;
-
-  function shuffle(arr){
-    for(let i = arr.length - 1; i > 0; i--){
-      const j = Math.floor(Math.random() * (i + 1));
-      [arr[i], arr[j]] = [arr[j], arr[i]];
-    }
-    return arr;
-  }
-
-  function pickRandom(arr){
-    return arr[Math.floor(Math.random() * arr.length)];
-  }
-
-  function norm(s){
-    return (s || "").toString().trim().replace(/\s+/g, " ");
-  }
 
   function etwasForm(adj){
     // 6.-Klasse-tauglich: Groß + "es" (Neues, Gutes, Schönes, Öffentliches, ...)
@@ -192,207 +124,325 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   /***********************
-   * Gute Satz-Pools (Verben)
-   * => viele Varianten, damit es nicht stumpf wirkt
-   ***********************/
-  const VERB_DAS = [
-    () => `Das ______ macht oft am meisten Spaß.`,
-    () => `Das ______ fällt manchen leicht, anderen schwer.`,
-    () => `Das ______ gehört für viele zum Alltag.`,
-    () => `Das ______ ist heute unser Thema.`,
-    () => `Das ______ kann man jeden Tag ein bisschen üben.`,
-    () => `Das ______ hilft mir, mich zu konzentrieren.`,
-    () => `Das ______ macht in der Gruppe mehr Freude.`,
-    () => `Das ______ ist eine gute Vorbereitung für die Klassenarbeit.`,
-  ];
-
-  const VERB_BEIM = [
-    () => `Beim ______ muss man manchmal geduldig sein.`,
-    () => `Beim ______ lernt man oft etwas Neues.`,
-    () => `Beim ______ passieren Fehler – das ist normal.`,
-    () => `Beim ______ ist es gut, wenn man ruhig bleibt.`,
-    () => `Beim ______ merkt man, ob man aufmerksam ist.`,
-    () => `Beim ______ kann Teamarbeit sehr helfen.`,
-    () => `Beim ______ ist Übung wirklich wichtig.`,
-    () => `Beim ______ sollte man gut aufpassen.`,
-  ];
-
-  /***********************
-   * Adjektiv-Aufgaben:
-   * 1) "das X" (recht universelle Sätze, die wirklich passen)
-   * 2) "etwas Xes" (INDIVIDUELL pro Adjektiv, damit keine komischen Sätze entstehen)
-   ***********************/
-  const ADJ_DAS = [
-    () => `Das ______ ist nicht immer leicht zu erklären.`,
-    () => `Man erkennt das ______ oft erst später.`,
-    () => `Über das ______ kann man lange diskutieren.`,
-    () => `Das ______ ist manchmal schwer zu akzeptieren.`,
-    () => `Das ______ klingt gut, aber man muss es prüfen.`,
-    () => `Das ______ ist oft wichtiger als das Unwichtige.`,
-  ];
-
-  // Individuelle, sinnvolle "etwas Xes"-Kontexte
-  // (damit es NICHT so wird wie "etwas Langsames über deine Woche")
-  const ADJ_ETWAS_SENTENCE = {
-    gut:        `Ich habe heute etwas ______ erlebt.`,
-    neu:        `In der Schule gibt es etwas ______.`,
-    alt:        `Ich habe zu Hause etwas ______ gefunden.`,
-    jung:       `Wir kümmern uns um etwas ______ in der Klasse.`,
-    klein:      `Kannst du mir etwas ______ geben?`,
-    groß:       `Wir planen etwas ______ für das Schulfest.`,
-    schön:      `Ich möchte etwas ______ zeichnen.`,
-    wichtig:    `Ich muss dir etwas ______ sagen.`,
-    richtig:    `Ich brauche etwas ______ für meine Lösung.`,
-    falsch:     `Ich habe etwas ______ verstanden.`,
-    schnell:    `Ich mache mir schnell etwas ______ zu essen.`,
-    langsam:    `Nach einem stressigen Tag mache ich etwas ______ (z.B. einen Spaziergang).`,
-    stark:      `Manchmal spürt man etwas ______ (z.B. Freude oder Ärger).`,
-    klug:       `Das war etwas ______ gesagt!`,
-    freundlich: `Sag doch etwas ______ zu ihr.`,
-
-    fremd:      `In der Stadt sehe ich manchmal etwas ______.`,
-    eigen:      `Ich möchte etwas ______ ausprobieren.`,
-    besonders:  `Heute machen wir etwas ______ im Unterricht.`,
-    öffentlich: `In der Schule steht etwas ______ zur Diskussion.`,
-    gemeinsam:  `Wir haben etwas ______ vor.`,
-  };
-
-  /***********************
-   * Spezialfälle (dunkel/krank)
-   ***********************/
-  function specialAdjTasks(lemma){
-    if(lemma === "dunkel"){
-      return [
-        {
-          key:`a1:dunkel`,
-          word:"dunkel",
-          kind:"Adjektiv → Nomen (Falle)",
-          sentenceTpl:`Im ______ sieht man nicht gut.`,
-          answer:"Dunkeln",
-          explain:`Begleiter: „im“ (= in + dem). „Dunkeln“ ist hier ein Nomen → groß.`
-        },
-        {
-          key:`a2:dunkel`,
-          word:"dunkel",
-          kind:"Adjektiv → Nomen",
-          sentenceTpl:`Das ______ kann manchmal unheimlich wirken.`,
-          answer:"Dunkle",
-          explain:`Begleiter: „das“. „das Dunkle“ = nominalisiertes Adjektiv → groß.`
-        }
-      ];
-    }
-
-    if(lemma === "krank"){
-      return [
-        {
-          key:`a1:krank`,
-          word:"krank",
-          kind:"Adjektiv → Nomen (Bonus/Falle)",
-          sentenceTpl:`Im ______ sollte man leise sein.`,
-          answer:"Kranken",
-          explain:`Begleiter: „im“ (= in + dem). „Kranken“ wird hier als Nomen gebraucht → groß.`
-        },
-        {
-          key:`a2:krank`,
-          word:"krank",
-          kind:"Adjektiv → Nomen",
-          sentenceTpl:`Das ______ braucht Zeit, um wieder gesund zu werden.`,
-          answer:"Kranke",
-          explain:`Begleiter: „das“. „das Kranke“ = nominalisiertes Adjektiv → groß.`
-        }
-      ];
-    }
-    return null;
-  }
-
-  /***********************
-   * Items bauen (2 pro Wort)
+   * 104 natürliche Sätze (2 pro Wort)
+   * - KEINE Universal-Schablonen
+   * - Jeder Satz passt semantisch zum Wort
    ***********************/
   const ITEMS = [];
 
-  for(const w of WORDS){
-    if(w.type === "verb"){
-      const N = cap(w.lemma);
-
-      // 1) das + Verb als Nomen
-      ITEMS.push({
-        key:`v1:${w.lemma}`,
-        word:w.lemma,
-        kind:"Verb → Nomen",
-        sentenceTpl: pickRandom(VERB_DAS)(),
-        answer: N,
-        explain:`Begleiter: „das“ → Nominalisierung (Nomen) → groß. Lösung: „${N}“.`
-      });
-
-      // 2) beim + Verb als Nomen
-      ITEMS.push({
-        key:`v2:${w.lemma}`,
-        word:w.lemma,
-        kind:"Verb → Nomen",
-        sentenceTpl: pickRandom(VERB_BEIM)(),
-        answer: N,
-        explain:`Begleiter: „beim“ (= bei + dem) → Nominalisierung (Nomen) → groß. Lösung: „${N}“.`
-      });
-
-      continue;
-    }
-
-    // specials
-    const special = specialAdjTasks(w.lemma);
-    if(special){
-      ITEMS.push(...special);
-      continue;
-    }
-
-    // Standard adj
-    const Das = cap(w.lemma);
-    const Xes = etwasForm(w.lemma);
-
-    const etwasSentence = ADJ_ETWAS_SENTENCE[w.lemma];
-    if(!etwasSentence){
-      // Safety fallback (shouldn't happen)
-      // Keep it broadly acceptable:
-      // "Ich wünsche dir etwas Neues."-type
-      // But we prefer per-word mapping above.
-      ITEMS.push({
-        key:`a1:${w.lemma}`,
-        word:w.lemma,
-        kind:"Adjektiv → Nomen",
-        sentenceTpl: pickRandom(ADJ_DAS)(),
-        answer: Das,
-        explain:`Begleiter: „das“ → nominalisiertes Adjektiv → groß. Lösung: „${Das}“.`
-      });
-      ITEMS.push({
-        key:`a2:${w.lemma}`,
-        word:w.lemma,
-        kind:"Adjektiv → Nomen",
-        sentenceTpl: `Ich wünsche dir etwas ______.`,
-        answer: Xes,
-        explain:`Begleiter: „etwas“ → nominalisiertes Adjektiv → groß. Lösung: „${Xes}“.`
-      });
-      continue;
-    }
-
+  function addVerb(lemma, dasSentence, beimSentence, beimObj){
+    const N = cap(lemma);
     ITEMS.push({
-      key:`a1:${w.lemma}`,
-      word:w.lemma,
-      kind:"Adjektiv → Nomen",
-      sentenceTpl: pickRandom(ADJ_DAS)(),
-      answer: Das,
-      explain:`Begleiter: „das“ → nominalisiertes Adjektiv → groß. Lösung: „${Das}“.`
+      key: `v1:${lemma}`,
+      word: lemma,
+      kind: "Verb → Nomen",
+      sentenceTpl: dasSentence,
+      answer: N,
+      explain: `Begleiter: „das“ → Nominalisierung (Nomen) → groß. Lösung: „${N}“.`
     });
-
     ITEMS.push({
-      key:`a2:${w.lemma}`,
-      word:w.lemma,
-      kind:"Adjektiv → Nomen",
-      sentenceTpl: etwasSentence,
-      answer: Xes,
-      explain:`Begleiter: „etwas“ → nominalisiertes Adjektiv → groß. Lösung: „${Xes}“.`
+      key: `v2:${lemma}`,
+      word: lemma,
+      kind: "Verb → Nomen",
+      sentenceTpl: beimSentence,
+      answer: N,
+      explain: `Begleiter: „beim“ (= bei + dem) → Nominalisierung (Nomen) → groß. ${beimObj ? "Kontext: " + beimObj + ". " : ""}Lösung: „${N}“.`
     });
   }
 
-  const GOAL = ITEMS.length; // 104
+  function addAdj(lemma, dasSentence, etwasSentence){
+    const Das = cap(lemma);
+    const Xes = etwasForm(lemma);
+    ITEMS.push({
+      key: `a1:${lemma}`,
+      word: lemma,
+      kind: "Adjektiv → Nomen",
+      sentenceTpl: dasSentence,
+      answer: Das,
+      explain: `Begleiter: „das“ → nominalisiertes Adjektiv → groß. Lösung: „${Das}“.`
+    });
+    ITEMS.push({
+      key: `a2:${lemma}`,
+      word: lemma,
+      kind: "Adjektiv → Nomen",
+      sentenceTpl: etwasSentence,
+      answer: Xes,
+      explain: `Begleiter: „etwas“ → nominalisiertes Adjektiv → groß. Lösung: „${Xes}“.`
+    });
+  }
+
+  // VERBEN (30) — каждое "beim" с нормальным дополнением
+  addVerb("spielen",
+    "Das ______ im Team macht vielen Kindern Spaß.",
+    "Beim ______ im Team muss man fair bleiben.",
+    "im Team"
+  );
+  addVerb("lesen",
+    "Das ______ eines spannenden Buches macht Freude.",
+    "Beim ______ eines Textes unterstreicht man wichtige Wörter.",
+    "eines Textes"
+  );
+  addVerb("schreiben",
+    "Das ______ eines Aufsatzes braucht Zeit.",
+    "Beim ______ eines Briefes achtet man auf die Anrede.",
+    "eines Briefes"
+  );
+  addVerb("lernen",
+    "Das ______ für die Klassenarbeit hilft sehr.",
+    "Beim ______ für einen Test macht ein Plan Sinn.",
+    "für einen Test"
+  );
+  addVerb("essen",
+    "Das ______ in der Pause ist für viele der beste Moment.",
+    "Beim ______ am Tisch sagt man „Guten Appetit“.",
+    "am Tisch"
+  );
+  addVerb("trinken",
+    "Das ______ von Wasser ist nach dem Sport wichtig.",
+    "Beim ______ aus der Flasche sollte man nicht kleckern.",
+    "aus der Flasche"
+  );
+  addVerb("schlafen",
+    "Das ______ ist wichtig für die Gesundheit.",
+    "Beim ______ im Zelt hört man nachts viele Geräusche.",
+    "im Zelt"
+  );
+  addVerb("laufen",
+    "Das ______ im Park macht den Kopf frei.",
+    "Beim ______ im Wald sollte man auf den Weg achten.",
+    "im Wald"
+  );
+  addVerb("schwimmen",
+    "Das ______ im Schwimmbad macht vielen Spaß.",
+    "Beim ______ im See muss man vorsichtig sein.",
+    "im See"
+  );
+  addVerb("singen",
+    "Das ______ im Chor klingt oft besonders schön.",
+    "Beim ______ im Chor achtet man auf den Einsatz.",
+    "im Chor"
+  );
+  addVerb("tanzen",
+    "Das ______ auf dem Schulfest macht gute Laune.",
+    "Beim ______ zu Musik hält man den Rhythmus.",
+    "zu Musik"
+  );
+  addVerb("lachen",
+    "Das ______ über einen Witz steckt an.",
+    "Beim ______ merkt man, dass man sich wohlfühlt.",
+    "—"
+  );
+  addVerb("weinen",
+    "Das ______ bei einem traurigen Film ist normal.",
+    "Beim ______ hilft es, wenn jemand tröstet.",
+    "—"
+  );
+  addVerb("sprechen",
+    "Das ______ vor der Klasse kann am Anfang schwer sein.",
+    "Beim ______ mit der Lehrerin sollte man zuhören.",
+    "mit der Lehrerin"
+  );
+  addVerb("hören",
+    "Das ______ von Musik entspannt viele Menschen.",
+    "Beim ______ einer Durchsage muss man genau sein.",
+    "einer Durchsage"
+  );
+  addVerb("sehen",
+    "Das ______ eines Films macht im Kino besonders Spaß.",
+    "Beim ______ eines Experiments schaut man genau hin.",
+    "eines Experiments"
+  );
+  addVerb("denken",
+    "Das ______ über eine Aufgabe hilft beim Verstehen.",
+    "Beim ______ über Probleme kommen oft neue Ideen.",
+    "über Probleme"
+  );
+  addVerb("rechnen",
+    "Das ______ mit großen Zahlen übt man in Mathe.",
+    "Beim ______ mit Brüchen hilft ein sauberer Schrittplan.",
+    "mit Brüchen"
+  );
+  addVerb("malen",
+    "Das ______ eines Bildes kann sehr entspannen.",
+    "Beim ______ mit Wasserfarben braucht man Papier.",
+    "mit Wasserfarben"
+  );
+  addVerb("basteln",
+    "Das ______ für den Unterricht macht oft Spaß.",
+    "Beim ______ mit Schere und Kleber passt man auf.",
+    "mit Schere und Kleber"
+  );
+  addVerb("reisen",
+    "Das ______ mit der Familie kann spannend sein.",
+    "Beim ______ mit dem Zug braucht man Geduld.",
+    "mit dem Zug"
+  );
+  addVerb("helfen",
+    "Das ______ in der Klasse ist wichtig.",
+    "Beim ______ einer Freundin ist man freundlich.",
+    "einer Freundin"
+  );
+  addVerb("kaufen",
+    "Das ______ im Supermarkt dauert manchmal lange.",
+    "Beim ______ von Kleidung probiert man Größen aus.",
+    "von Kleidung"
+  );
+  addVerb("gewinnen",
+    "Das ______ eines Spiels fühlt sich gut an.",
+    "Beim ______ eines Wettkampfs bleibt man fair.",
+    "eines Wettkampfs"
+  );
+  addVerb("verlieren",
+    "Das ______ eines Spiels ist ärgerlich, aber normal.",
+    "Beim ______ eines Spiels lernt man trotzdem etwas.",
+    "eines Spiels"
+  );
+  addVerb("üben",
+    "Das ______ am Instrument braucht Ausdauer.",
+    "Beim ______ für die Klassenarbeit wiederholt man Regeln.",
+    "für die Klassenarbeit"
+  );
+  addVerb("arbeiten",
+    "Das ______ an einem Projekt macht oft stolz.",
+    "Beim ______ in Gruppen verteilt man Aufgaben.",
+    "in Gruppen"
+  );
+  addVerb("suchen",
+    "Das ______ nach dem Schlüssel kann nervig sein.",
+    "Beim ______ nach Informationen hilft das Inhaltsverzeichnis.",
+    "nach Informationen"
+  );
+  addVerb("finden",
+    "Das ______ einer Lösung macht oft glücklich.",
+    "Beim ______ von Fehlern im Text hilft langsames Lesen.",
+    "von Fehlern im Text"
+  );
+  addVerb("beginnen",
+    "Das ______ einer Aufgabe ist manchmal das Schwerste.",
+    "Beim ______ einer Präsentation stellt man sich kurz vor.",
+    "einer Präsentation"
+  );
+
+  // ADJEKTIVE (15 + 5 Aha) — естественные контексты
+  addAdj("gut",
+    "Das ______ erkennt man oft daran, dass es allen hilft.",
+    "Ich habe heute etwas ______ gelernt."
+  );
+  addAdj("neu",
+    "Das ______ macht am Anfang manchmal nervös.",
+    "In der Schule gibt es etwas ______ zu entdecken."
+  );
+  addAdj("alt",
+    "Das ______ hat oft eine spannende Geschichte.",
+    "Ich habe zu Hause etwas ______ gefunden."
+  );
+  addAdj("jung",
+    "Das ______ braucht oft Unterstützung.",
+    "Wir kümmern uns um etwas ______ in unserem Verein."
+  );
+  addAdj("klein",
+    "Das ______ kann auch wichtig sein.",
+    "Kannst du mir etwas ______ geben?"
+  );
+  addAdj("groß",
+    "Das ______ wirkt manchmal beeindruckend.",
+    "Wir planen etwas ______ für das Schulfest."
+  );
+  addAdj("schön",
+    "Das ______ sieht man oft erst auf den zweiten Blick.",
+    "Ich möchte heute etwas ______ zeichnen."
+  );
+  addAdj("wichtig",
+    "Das ______ sollte man nicht vergessen.",
+    "Ich muss dir etwas ______ sagen."
+  );
+  addAdj("richtig",
+    "Das ______ fühlt sich meistens stimmig an.",
+    "Ich brauche etwas ______ für meine Lösung."
+  );
+  addAdj("falsch",
+    "Das ______ merkt man oft erst später.",
+    "Ich habe etwas ______ verstanden."
+  );
+  addAdj("schnell",
+    "Das ______ ist nicht immer auch gut.",
+    "Ich mache mir schnell etwas ______ zu essen."
+  );
+  addAdj("langsam",
+    "Das ______ kann helfen, genauer zu arbeiten.",
+    "Nach einem stressigen Tag mache ich etwas ______ (z.B. einen Spaziergang)."
+  );
+  addAdj("stark",
+    "Das ______ sieht man oft in schwierigen Momenten.",
+    "Manchmal spürt man etwas ______ (z.B. Freude oder Ärger)."
+  );
+  addAdj("klug",
+    "Das ______ erkennt man an guten Argumenten.",
+    "Das war etwas ______ gesagt!"
+  );
+  addAdj("freundlich",
+    "Das ______ macht den Alltag leichter.",
+    "Sag doch etwas ______ zu ihr."
+  );
+
+  // Aha (5)
+  addAdj("fremd",
+    "Das ______ macht manchmal unsicher, aber auch neugierig.",
+    "In der Stadt sehe ich manchmal etwas ______."
+  );
+  addAdj("eigen",
+    "Das ______ darf man ruhig haben – jeder ist anders.",
+    "Ich möchte etwas ______ ausprobieren."
+  );
+  addAdj("besonders",
+    "Das ______ fällt oft sofort auf.",
+    "Heute machen wir etwas ______ im Unterricht."
+  );
+  addAdj("öffentlich",
+    "Das ______ betrifft oft viele Menschen.",
+    "In der Schule steht etwas ______ zur Diskussion."
+  );
+  addAdj("gemeinsam",
+    "Das ______ schafft Vertrauen.",
+    "Wir haben etwas ______ vor."
+  );
+
+  // Fallen (2) — как отдельные ручные задания (2 на слово)
+  ITEMS.push({
+    key:`a1:dunkel`,
+    word:"dunkel",
+    kind:"Adjektiv → Nomen (Falle)",
+    sentenceTpl:"Im ______ sieht man nicht gut.",
+    answer:"Dunkeln",
+    explain:"Begleiter: „im“ (= in + dem). „Dunkeln“ ist hier ein Nomen → groß. Lösung: „Dunkeln“."
+  });
+  ITEMS.push({
+    key:`a2:dunkel`,
+    word:"dunkel",
+    kind:"Adjektiv → Nomen",
+    sentenceTpl:"Das ______ kann manchmal unheimlich wirken.",
+    answer:"Dunkle",
+    explain:"Begleiter: „das“. „das Dunkle“ = nominalisiertes Adjektiv → groß. Lösung: „Dunkle“."
+  });
+  ITEMS.push({
+    key:`a1:krank`,
+    word:"krank",
+    kind:"Adjektiv → Nomen (Bonus/Falle)",
+    sentenceTpl:"Im ______ sollte man Rücksicht nehmen.",
+    answer:"Kranken",
+    explain:"Begleiter: „im“ (= in + dem). „Kranken“ wird hier als Nomen gebraucht → groß. Lösung: „Kranken“."
+  });
+  ITEMS.push({
+    key:`a2:krank`,
+    word:"krank",
+    kind:"Adjektiv → Nomen",
+    sentenceTpl:"Das ______ braucht Zeit, um wieder gesund zu werden.",
+    answer:"Kranke",
+    explain:"Begleiter: „das“. „das Kranke“ = nominalisiertes Adjektiv → groß. Lösung: „Kranke“."
+  });
+
+  // Контроль: должно получиться 104
+  const GOAL = ITEMS.length;
 
   /***********************
    * UI refs
@@ -419,9 +469,28 @@ document.addEventListener("DOMContentLoaded", () => {
   const btnSaveInfo=document.getElementById("btnSaveInfo");
 
   /***********************
+   * Helpers
+   ***********************/
+  function shuffle(arr){
+    for(let i = arr.length - 1; i > 0; i--){
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  }
+
+  function pickRandom(arr){
+    return arr[Math.floor(Math.random() * arr.length)];
+  }
+
+  function norm(s){
+    return (s || "").toString().trim().replace(/\s+/g, " ");
+  }
+
+  /***********************
    * Storage
    ***********************/
-  const STORAGE_KEY = "nominalisierung_training_v3";
+  const STORAGE_KEY = "nominalisierung_training_v4";
 
   function safeParse(json){
     try { return JSON.parse(json); } catch { return null; }
@@ -430,7 +499,7 @@ document.addEventListener("DOMContentLoaded", () => {
   function defaultState(){
     const keys = ITEMS.map(it => it.key);
     const statusByKey = Object.fromEntries(keys.map(k => [k, 0])); // 0 offen, 1 richtig, 2 review
-    const mainQueue = shuffle([...keys]); // ✅ random
+    const mainQueue = shuffle([...keys]); // random
 
     return {
       statusByKey,
@@ -516,19 +585,18 @@ document.addEventListener("DOMContentLoaded", () => {
     const rows = ITEMS.map(it => {
       const st = state.statusByKey[it.key];
       const label = st===1 ? "richtig" : (st===2 ? "wiederholen" : "offen");
-      return `${it.word.padEnd(12)} | ${(it.kind).padEnd(16)} | ${it.answer.padEnd(12)} | ${label}`;
+      return `${it.word.padEnd(12)} | ${(it.kind).padEnd(18)} | ${it.answer.padEnd(12)} | ${label}`;
     }).join("\n");
 
     sEl.textContent =
       `STATUS\n------\nRichtig: ${solved}/${GOAL}\n\n` +
-      `WORT        | TYP              | LÖSUNG        | STATUS\n` +
-      `-------------------------------------------------------\n` +
+      `WORT        | TYP                | LÖSUNG        | STATUS\n` +
+      `--------------------------------------------------------\n` +
       rows;
   }
 
   /***********************
-   * Review logic (>=5)
-   * + random pick among due reviews
+   * Review logic (>= 5 Fragen)
    ***********************/
   const byKey = (key) => ITEMS.find(x => x.key === key);
 
@@ -554,7 +622,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     if(state.reviewQueue.length){
-      // pick earliest due (tie random)
       let bestDue = Infinity;
       for(const k of state.reviewQueue){
         bestDue = Math.min(bestDue, state.reviewDueAt[k] ?? Infinity);
@@ -730,12 +797,12 @@ document.addEventListener("DOMContentLoaded", () => {
   /***********************
    * Wortbank unten
    ***********************/
-  const verbs = WORDS.filter(w => w.type==="verb").map(w=>w.lemma).join(", ");
-  const adjs  = WORDS.filter(w => w.type==="adj").map(w=>w.lemma).join(", ");
+  const verbs = WORDS.slice(0,30).join(", ");
+  const adjs  = WORDS.slice(30).join(", ");
   bankBox.innerHTML =
-    `<b>Verben:</b> ${verbs}<br><br>` +
-    `<b>Adjektive:</b> ${adjs}<br><br>` +
-    `Aus jedem Wort entstehen <b>2 Aufgaben</b> (insgesamt <b>${GOAL}</b>).`;
+    `<b>Verben (30):</b> ${verbs}<br><br>` +
+    `<b>Adjektive & Aha/Fallen (22):</b> ${adjs}<br><br>` +
+    `Insgesamt: <b>${GOAL}</b> Aufgaben (2 pro Wort).`;
 
   /***********************
    * Start
