@@ -1,0 +1,646 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Nominalisierung-Training (6. Klasse)</title>
+  <style>
+    body { font-family: -apple-system, system-ui, Arial, sans-serif; margin: 16px; }
+    h1 { font-size: 20px; margin: 0 0 8px; }
+    p { margin: 6px 0 12px; color:#555; line-height: 1.35; }
+    .bank { padding: 10px; border: 1px solid #ddd; border-radius: 10px; background: #fafafa; }
+    .bank b { display:block; margin-bottom:6px; }
+    .card { margin-top: 14px; padding: 14px; border: 1px solid #eee; border-radius: 12px; }
+    .toprow { display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom: 10px; }
+    .mini { font-size: 13px; color:#666; }
+    .q { font-size: 18px; line-height: 1.35; margin-top: 8px; }
+    .subq { margin-top: 8px; color:#666; font-size: 13px; }
+    .hintbox { margin-top:10px; padding:10px; border:1px dashed #ccc; border-radius:10px; background:#fcfcfc; color:#333; }
+    input { font-size: 17px; padding: 10px; width: 100%; box-sizing: border-box; margin-top: 10px; }
+    button { font-size: 16px; padding: 10px 12px; margin-top: 10px; }
+    .row { display:flex; gap:10px; flex-wrap:wrap; }
+    .row button { flex: 1; min-width: 160px; }
+    .ok { color: #0a7a0a; font-weight: 700; }
+    .bad { color: #b00020; font-weight: 700; }
+    .muted { color:#666; }
+    .warn { background:#fff7e6; border:1px solid #ffe0a3; padding:10px; border-radius:10px; color:#5b3b00; margin-top:10px;}
+    .pill { display:inline-block; padding: 2px 8px; border-radius: 999px; border:1px solid #ddd; font-size: 12px; margin-left: 8px; }
+    .status { margin-top: 12px; white-space: pre-wrap; font-family: ui-monospace, Menlo, monospace; font-size: 13px; }
+    .barwrap { width: 100%; height: 10px; border:1px solid #ddd; border-radius:999px; overflow:hidden; background:#fff; }
+    .bar { height: 100%; width:0%; background:#2a7; }
+    noscript { display:block; margin-top:10px; padding:10px; border:1px solid #d00; border-radius:10px; color:#700; }
+    .smallbtn { font-size: 14px; padding: 8px 10px; }
+  </style>
+</head>
+
+<body>
+  <h1>Nominalisierung-Training (6. Klasse)</h1>
+  <p>
+    <b>Ziel:</b> Erkenne Nominalisierungen (Verben/Adjektive als Nomen) und schreibe das Wort <b>richtig groß</b>.
+    Du siehst immer einen Satz mit Lücke. Tippe das passende Wort in der <b>richtigen Form</b> (inkl. Groß-/Kleinschreibung).
+    <br>
+    Bei falscher Antwort (oder „Lösung zeigen“) kommt die Aufgabe <b>erst nach mindestens 5 weiteren Fragen</b> wieder – bis sie richtig gelöst ist.
+  </p>
+
+  <div class="bank" id="bank"></div>
+
+  <noscript>
+    JavaScript ist deaktiviert. Bitte diese Seite in einem Browser öffnen, der JavaScript erlaubt.
+  </noscript>
+
+  <div class="card">
+    <div class="toprow">
+      <div class="mini" id="progressText">Fortschritt: 0%</div>
+      <div class="mini" id="progressNums"></div>
+      <div class="mini" id="reviewinfo"></div>
+      <div class="mini" id="qnum"></div>
+    </div>
+
+    <div class="barwrap" aria-label="Fortschrittsbalken">
+      <div class="bar" id="bar"></div>
+    </div>
+
+    <div class="q" id="question">Lade Frage…</div>
+    <div class="subq" id="subq"></div>
+
+    <div class="hintbox" id="hintBox"></div>
+
+    <input id="answer" placeholder="Antwort hier eingeben (z.B. Spielen / Neues / Fremde …)" autocomplete="off" />
+
+    <div class="row">
+      <button id="btnCheck" type="button">✅ Prüfen</button>
+      <button id="btnShow" type="button">👁️ Lösung zeigen</button>
+    </div>
+
+    <div class="row">
+      <button id="btnNext" type="button" disabled>➡️ Nächste Frage</button>
+      <button id="btnSkip" type="button">⏭️ Überspringen</button>
+    </div>
+
+    <div id="feedback" style="margin-top:10px;"></div>
+
+    <div class="row">
+      <button id="btnStatus" class="smallbtn" type="button">📊 Status</button>
+      <button id="btnRestart" class="smallbtn" type="button">🔄 Statistik zurücksetzen</button>
+      <button id="btnSaveInfo" class="smallbtn" type="button">💾 Speicherinfo</button>
+    </div>
+
+    <div class="status" id="status"></div>
+  </div>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+
+  /***********************
+   * 1) Wortbank (52)
+   ***********************/
+  const WORDS = [
+    // Häufige Verben
+    { lemma: "spielen",   type: "verb" },
+    { lemma: "lesen",     type: "verb" },
+    { lemma: "schreiben", type: "verb" },
+    { lemma: "lernen",    type: "verb" },
+    { lemma: "essen",     type: "verb" },
+    { lemma: "trinken",   type: "verb" },
+    { lemma: "schlafen",  type: "verb" },
+    { lemma: "laufen",    type: "verb" },
+    { lemma: "schwimmen", type: "verb" },
+    { lemma: "singen",    type: "verb" },
+    { lemma: "tanzen",    type: "verb" },
+    { lemma: "lachen",    type: "verb" },
+    { lemma: "weinen",    type: "verb" },
+    { lemma: "sprechen",  type: "verb" },
+    { lemma: "hören",     type: "verb" },
+    { lemma: "sehen",     type: "verb" },
+    { lemma: "denken",    type: "verb" },
+    { lemma: "rechnen",   type: "verb" },
+    { lemma: "malen",     type: "verb" },
+    { lemma: "basteln",   type: "verb" },
+    { lemma: "reisen",    type: "verb" },
+    { lemma: "helfen",    type: "verb" },
+    { lemma: "kaufen",    type: "verb" },
+    { lemma: "gewinnen",  type: "verb" },
+    { lemma: "verlieren", type: "verb" },
+    { lemma: "üben",      type: "verb" },
+    { lemma: "arbeiten",  type: "verb" },
+    { lemma: "suchen",    type: "verb" },
+    { lemma: "finden",    type: "verb" },
+    { lemma: "beginnen",  type: "verb" },
+
+    // Häufige Adjektive
+    { lemma: "gut",        type: "adj" },
+    { lemma: "neu",        type: "adj" },
+    { lemma: "alt",        type: "adj" },
+    { lemma: "jung",       type: "adj" },
+    { lemma: "klein",      type: "adj" },
+    { lemma: "groß",       type: "adj" },
+    { lemma: "schön",      type: "adj" },
+    { lemma: "wichtig",    type: "adj" },
+    { lemma: "richtig",    type: "adj" },
+    { lemma: "falsch",     type: "adj" },
+    { lemma: "schnell",    type: "adj" },
+    { lemma: "langsam",    type: "adj" },
+    { lemma: "stark",      type: "adj" },
+    { lemma: "klug",       type: "adj" },
+    { lemma: "freundlich", type: "adj" },
+
+    // „Aha“-Wörter / schwieriger
+    { lemma: "fremd",      type: "adj" },
+    { lemma: "eigen",      type: "adj" },
+    { lemma: "besonders",  type: "adj" },
+    { lemma: "öffentlich", type: "adj" },
+    { lemma: "gemeinsam",  type: "adj" },
+
+    // Fallen
+    { lemma: "dunkel", type: "adj" }, // im Dunkeln
+    { lemma: "krank",  type: "adj" }  // im Kranken (Bonus/Falle)
+  ];
+
+  /***********************
+   * 2) Aufgaben-Generator
+   *    - Aus jedem Wort machen wir 2 Aufgaben
+   *    -> insgesamt 104 Aufgaben
+   ***********************/
+  const cap = (s) => s ? (s[0].toUpperCase() + s.slice(1)) : s;
+
+  function makeVerbTasks(lemma) {
+    const N = cap(lemma); // Spielen
+    return [
+      {
+        key: `v1:${lemma}`,
+        word: lemma,
+        kind: "Verb → Nomen",
+        sentence: `Beim ______ macht man oft viel Spaß.`,
+        answer: N,
+        hint: `Begleiter: „beim“ (= bei + dem). Nominalisierung → groß: „${N}“.`
+      },
+      {
+        key: `v2:${lemma}`,
+        word: lemma,
+        kind: "Verb → Nomen",
+        sentence: `Das ______ ist heute unser Thema im Unterricht.`,
+        answer: N,
+        hint: `Begleiter: „das“. Nominalisierung → groß: „${N}“.`
+      }
+    ];
+  }
+
+  // Sehr einfache (6.-Klasse-taugliche) Formen:
+  // - das + Adj  -> das Gute, das Neue, ...
+  // - etwas + Adj(e)s -> etwas Neues, etwas Gutes, ...
+  // Sonderfälle: dunkel -> im Dunkeln, krank -> im Kranken (Falle/Bonus)
+  function makeAdjTasks(lemma) {
+    const base = lemma;
+    const Das = cap(base);
+
+    // Hilfsfunktion für "etwas + Adjektiv" (Neues/Gutes/Schönes/...)
+    function etwasForm(adj) {
+      // für 6. Klasse reicht meist: Stamm + "es" (Neues, Gutes, Schönes, ...)
+      // bei "groß" -> Großes, "öffentlich" -> Öffentliches, "besonders" -> Besonderes, ...
+      return cap(adj) + "es";
+    }
+
+    // Spezialfälle
+    if (base === "dunkel") {
+      return [
+        {
+          key: `a1:${base}`,
+          word: base,
+          kind: "Adjektiv → Nomen (Falle)",
+          sentence: `Im ______ sieht man nicht gut.`,
+          answer: "Dunkeln",
+          hint: `Begleiter: „im“ (= in + dem). Hier ist „Dunkeln“ ein Nomen → groß.`
+        },
+        {
+          key: `a2:${base}`,
+          word: base,
+          kind: "Adjektiv → Nomen (Falle)",
+          sentence: `Das ______ kann auch unheimlich wirken.`,
+          answer: "Dunkle",
+          hint: `„das Dunkle“ = nominalisiertes Adjektiv. Großschreibung: „Dunkle“.`
+        }
+      ];
+    }
+
+    if (base === "krank") {
+      return [
+        {
+          key: `a1:${base}`,
+          word: base,
+          kind: "Adjektiv → Nomen (Bonus/Falle)",
+          sentence: `Im ______ sollte man leise sein.`,
+          answer: "Kranken",
+          hint: `Falle/Bonus: „im Kranken“ (historisch/selten). Wichtig: Nominalisierung → groß.`
+        },
+        {
+          key: `a2:${base}`,
+          word: base,
+          kind: "Adjektiv → Nomen",
+          sentence: `Das ______ braucht Zeit, um wieder gesund zu werden.`,
+          answer: "Kranke",
+          hint: `„das Kranke“ = nominalisiertes Adjektiv. Groß: „Kranke“.`
+        }
+      ];
+    }
+
+    // Standard-Fälle
+    return [
+      {
+        key: `a1:${base}`,
+        word: base,
+        kind: "Adjektiv → Nomen",
+        sentence: `Das ______ ist manchmal schwer zu erkennen.`,
+        answer: Das,
+        hint: `Begleiter: „das“. Nominalisierung → groß: „${Das}“.`
+      },
+      {
+        key: `a2:${base}`,
+        word: base,
+        kind: "Adjektiv → Nomen",
+        sentence: `Ich wünsche dir etwas ______ für den Tag.`,
+        answer: etwasForm(base),
+        hint: `Begleiter: „etwas“. Nominalisierung → groß: „${etwasForm(base)}“.`
+      }
+    ];
+  }
+
+  const ITEMS = [];
+  for (const w of WORDS) {
+    if (w.type === "verb") ITEMS.push(...makeVerbTasks(w.lemma));
+    else ITEMS.push(...makeAdjTasks(w.lemma));
+  }
+
+  // Ziel: 100% = alle Aufgaben einmal korrekt
+  const GOAL = ITEMS.length;
+
+  /***********************
+   * 3) UI-Refs
+   ***********************/
+  const bankEl = document.getElementById("bank");
+  const qEl = document.getElementById("question");
+  const subqEl = document.getElementById("subq");
+  const hintBox = document.getElementById("hintBox");
+  const aEl = document.getElementById("answer");
+  const fEl = document.getElementById("feedback");
+  const sEl = document.getElementById("status");
+  const progressText = document.getElementById("progressText");
+  const progressNums = document.getElementById("progressNums");
+  const reviewinfo = document.getElementById("reviewinfo");
+  const qnEl = document.getElementById("qnum");
+  const barEl = document.getElementById("bar");
+
+  const btnCheck = document.getElementById("btnCheck");
+  const btnShow  = document.getElementById("btnShow");
+  const btnNext  = document.getElementById("btnNext");
+  const btnSkip  = document.getElementById("btnSkip");
+  const btnStatus= document.getElementById("btnStatus");
+  const btnRestart=document.getElementById("btnRestart");
+  const btnSaveInfo=document.getElementById("btnSaveInfo");
+
+  /***********************
+   * 4) Speicherung (localStorage)
+   ***********************/
+  const STORAGE_KEY = "nominalisierung_training_v1";
+
+  function norm(s){
+    return (s || "")
+      .toString()
+      .trim()
+      .replace(/\s+/g, " ");
+  }
+
+  function safeParse(json){
+    try { return JSON.parse(json); } catch { return null; }
+  }
+
+  function defaultState(){
+    return {
+      statusByKey: Object.fromEntries(ITEMS.map(it => [it.key, 0])), // 0 offen, 1 richtig, 2 falsch/offen in Review
+      mainQueue: ITEMS.map(it => it.key),
+      reviewQueue: [],
+      reviewDueAt: {},
+      step: 0,
+      currentKey: null,
+      currentMode: "unanswered", // unanswered | checked | shown
+      finished: false
+    };
+  }
+
+  let state = defaultState();
+
+  function saveState(){
+    const payload = {
+      state,
+      savedAt: new Date().toISOString()
+    };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+  }
+
+  function loadState(){
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(!raw) return false;
+    const parsed = safeParse(raw);
+    if(!parsed || !parsed.state) return false;
+
+    // sehr simple Kompatibilitätsprüfung:
+    if(!parsed.state.statusByKey) return false;
+
+    // Falls sich die Aufgabenliste geändert hat: defensiv mergen
+    const s = parsed.state;
+    const fresh = defaultState();
+
+    // statusByKey mergen
+    for(const key of Object.keys(fresh.statusByKey)){
+      if (s.statusByKey && Object.prototype.hasOwnProperty.call(s.statusByKey, key)) {
+        fresh.statusByKey[key] = s.statusByKey[key];
+      }
+    }
+
+    // Queues nur übernehmen, wenn Keys existieren
+    const exists = (k) => Object.prototype.hasOwnProperty.call(fresh.statusByKey, k);
+    fresh.mainQueue = (s.mainQueue || []).filter(exists);
+    // fehlende offene Keys in mainQueue nachschieben
+    const inMain = new Set(fresh.mainQueue);
+    for(const key of Object.keys(fresh.statusByKey)){
+      if(fresh.statusByKey[key] !== 1 && !inMain.has(key)) fresh.mainQueue.push(key);
+    }
+
+    fresh.reviewQueue = (s.reviewQueue || []).filter(exists);
+    fresh.reviewDueAt = {};
+    if(s.reviewDueAt){
+      for(const [k,v] of Object.entries(s.reviewDueAt)){
+        if(exists(k)) fresh.reviewDueAt[k] = v;
+      }
+    }
+
+    fresh.step = Number.isFinite(s.step) ? s.step : 0;
+    fresh.currentKey = null;
+    fresh.currentMode = "unanswered";
+    fresh.finished = false;
+
+    state = fresh;
+    return true;
+  }
+
+  /***********************
+   * 5) Status / Progress
+   ***********************/
+  function countSolved(){
+    return Object.values(state.statusByKey).filter(x => x === 1).length;
+  }
+  function countWrongOpen(){
+    return Object.values(state.statusByKey).filter(x => x === 2).length;
+  }
+
+  function updateHeader(){
+    const solved = countSolved();
+    const wrongOpen = countWrongOpen();
+    const percent = Math.round((solved / GOAL) * 100);
+
+    progressText.textContent = `Fortschritt: ${percent}%`;
+    progressNums.textContent = `${solved}/${GOAL} Aufgaben richtig`;
+    reviewinfo.textContent = wrongOpen ? `Wiederholung offen: ${wrongOpen}` : "";
+    qnEl.textContent = state.currentKey ? `Frage: ${state.step}` : "";
+
+    barEl.style.width = `${Math.min(100, (solved / GOAL) * 100)}%`;
+  }
+
+  function renderStatus(){
+    const solved = countSolved();
+    const rows = ITEMS.map(it => {
+      const st = state.statusByKey[it.key];
+      const label = st===1 ? "richtig" : (st===2 ? "wiederholen" : "offen");
+      const short = it.answer;
+      return `${(it.word).padEnd(12)} | ${(it.kind).padEnd(18)} | ${short.padEnd(12)} | ${label}`;
+    }).join("\n");
+
+    sEl.textContent =
+      `STATUS\n------\nRichtig: ${solved}/${GOAL}\n\n` +
+      `WORT        | TYP                | LÖSUNG        | STATUS\n` +
+      `---------------------------------------------------------\n` +
+      rows;
+  }
+
+  /***********************
+   * 6) SRS-Logik (wie im alten Projekt)
+   ***********************/
+  const byKey = (key) => ITEMS.find(x => x.key === key);
+
+  function enqueueReview(key){
+    const due = state.step + 5;
+    state.reviewDueAt[key] = Math.max(state.reviewDueAt[key] || 0, due);
+    if(!state.reviewQueue.includes(key)) state.reviewQueue.push(key);
+    state.statusByKey[key] = 2;
+  }
+
+  function removeFromReviewIfSolved(key){
+    state.reviewQueue = state.reviewQueue.filter(x => x !== key);
+    delete state.reviewDueAt[key];
+  }
+
+  function pickNextKey(){
+    const dueReview = state.reviewQueue.find(k => (state.reviewDueAt[k] ?? 0) <= state.step);
+    if(dueReview !== undefined) return dueReview;
+
+    while(state.mainQueue.length){
+      const k = state.mainQueue.shift();
+      if(state.statusByKey[k] !== 1) return k;
+    }
+
+    if(state.reviewQueue.length){
+      let best = state.reviewQueue[0];
+      let bestDue = state.reviewDueAt[best] ?? Infinity;
+      for(const k of state.reviewQueue){
+        const d = state.reviewDueAt[k] ?? Infinity;
+        if(d < bestDue){ best = k; bestDue = d; }
+      }
+      return best;
+    }
+    return null;
+  }
+
+  /***********************
+   * 7) Rendering
+   ***********************/
+  function renderQuestion(){
+    const next = pickNextKey();
+
+    if(next === null){
+      state.finished = true;
+      qEl.innerHTML = `Fertig! <span class="pill ok">100%</span>`;
+      subqEl.textContent = "";
+      hintBox.textContent = "";
+      fEl.innerHTML = `<span class="ok">Super! Alle Aufgaben sind erledigt.</span>`;
+      aEl.value = "";
+      aEl.disabled = true;
+      btnCheck.disabled = true;
+      btnShow.disabled = true;
+      btnNext.disabled = true;
+      btnSkip.disabled = true;
+      updateHeader();
+      renderStatus();
+      saveState();
+      return;
+    }
+
+    state.currentKey = next;
+    state.step += 1;
+    state.currentMode = "unanswered";
+
+    const it = byKey(next);
+
+    qEl.textContent = it.sentence.replace("______", "______");
+    subqEl.textContent = `Wort: ${it.word}  •  Typ: ${it.kind}`;
+    hintBox.innerHTML = `<b>Satz:</b> ${it.sentence}<br><b>Aufgabe:</b> Setze das passende Wort in die Lücke und achte auf die Großschreibung.`;
+
+    aEl.value = "";
+    aEl.disabled = false;
+
+    btnCheck.disabled = false;
+    btnShow.disabled = false;
+    btnSkip.disabled = false;
+    btnNext.disabled = true;
+
+    fEl.innerHTML = `<span class="muted">Tipp: Achte auf Begleiter wie „das“, „beim“, „zum“, „im“, „etwas“.</span>`;
+
+    updateHeader();
+    renderStatus();
+    saveState();
+    aEl.focus();
+  }
+
+  /***********************
+   * 8) Events
+   ***********************/
+  btnCheck.addEventListener("click", () => {
+    if(state.finished || !state.currentKey) return;
+    if(state.currentMode === "shown"){
+      fEl.innerHTML = `<span class="bad">Die Lösung wurde angezeigt. Bitte „Nächste Frage“ drücken.</span>`;
+      return;
+    }
+
+    const it = byKey(state.currentKey);
+    const user = norm(aEl.value);
+    const correct = norm(it.answer);
+
+    if(user === correct){
+      state.statusByKey[it.key] = 1;
+      removeFromReviewIfSolved(it.key);
+      fEl.innerHTML = `<span class="ok">Richtig!</span> <span class="pill">Lösung: ${it.answer}</span>`;
+      hintBox.innerHTML = `<b>Erklärung:</b> ${it.hint}`;
+    } else {
+      enqueueReview(it.key);
+      fEl.innerHTML = `<span class="bad">Falsch.</span> <span class="pill">Wiederholung nach ≥ 5 Fragen</span>`;
+      hintBox.innerHTML = `<b>Hinweis:</b> ${it.hint}`;
+    }
+
+    state.currentMode = "checked";
+    btnNext.disabled = false;
+
+    updateHeader();
+    renderStatus();
+    saveState();
+  });
+
+  btnShow.addEventListener("click", () => {
+    if(state.finished || !state.currentKey) return;
+
+    const it = byKey(state.currentKey);
+    enqueueReview(it.key);
+    state.currentMode = "shown";
+
+    fEl.innerHTML =
+      `<div class="warn"><b>Lösung:</b> <span class="ok">${it.answer}</span><br>` +
+      `<span class="muted">Eingabe ist gesperrt. Bitte „Nächste Frage“.</span></div>`;
+    hintBox.innerHTML = `<b>Erklärung:</b> ${it.hint}`;
+
+    aEl.disabled = true;
+    btnCheck.disabled = true;
+    btnNext.disabled = false;
+
+    updateHeader();
+    renderStatus();
+    saveState();
+  });
+
+  btnSkip.addEventListener("click", () => {
+    if(state.finished || !state.currentKey) return;
+
+    const it = byKey(state.currentKey);
+    enqueueReview(it.key);
+    state.currentMode = "checked";
+
+    fEl.innerHTML = `<span class="bad">Übersprungen.</span> <span class="pill">Wiederholung nach ≥ 5 Fragen</span>`;
+    hintBox.innerHTML = `<b>Hinweis:</b> ${it.hint}`;
+
+    btnNext.disabled = false;
+
+    updateHeader();
+    renderStatus();
+    saveState();
+  });
+
+  btnNext.addEventListener("click", () => {
+    if(state.finished) return;
+    renderQuestion();
+  });
+
+  btnStatus.addEventListener("click", () => {
+    // Status wird ohnehin automatisch aktualisiert, aber Button bleibt praktisch.
+    renderStatus();
+  });
+
+  btnRestart.addEventListener("click", () => {
+    localStorage.removeItem(STORAGE_KEY);
+    state = defaultState();
+
+    aEl.disabled = false;
+    btnCheck.disabled = false;
+    btnShow.disabled = false;
+    btnSkip.disabled = false;
+    btnNext.disabled = true;
+
+    fEl.innerHTML = `<span class="muted">Statistik zurückgesetzt. Startet neu…</span>`;
+    sEl.textContent = "";
+
+    renderQuestion();
+  });
+
+  btnSaveInfo.addEventListener("click", () => {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(!raw){
+      fEl.innerHTML = `<span class="muted">Noch nichts gespeichert (oder bereits zurückgesetzt).</span>`;
+      return;
+    }
+    const parsed = safeParse(raw);
+    const when = parsed?.savedAt ? parsed.savedAt : "(unbekannt)";
+    fEl.innerHTML = `<span class="ok">Gespeichert.</span> <span class="pill">Letzter Stand: ${when}</span>`;
+  });
+
+  aEl.addEventListener("keydown", (e) => {
+    if(e.key === "Enter") btnCheck.click();
+  });
+
+  /***********************
+   * 9) Wortbank anzeigen
+   ***********************/
+  const verbs = WORDS.filter(w => w.type==="verb").map(w=>w.lemma).join(", ");
+  const adjs  = WORDS.filter(w => w.type==="adj").map(w=>w.lemma).join(", ");
+  bankEl.innerHTML =
+    `<b>Wortbank (52 Wörter)</b>` +
+    `<div class="mini"><b>Verben:</b> ${verbs}</div>` +
+    `<div class="mini" style="margin-top:6px;"><b>Adjektive:</b> ${adjs}</div>` +
+    `<div class="mini" style="margin-top:6px;">Aus jedem Wort werden 2 Aufgaben generiert (insgesamt <b>${GOAL}</b> Aufgaben). Fortschritt bleibt gespeichert (Fortsetzen möglich).</div>`;
+
+  /***********************
+   * 10) Start
+   ***********************/
+  loadState();   // falls vorhanden
+  updateHeader();
+  renderStatus();
+  renderQuestion();
+});
+</script>
+
+</body>
+</html>
